@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pong</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+            height: 100vh;
+            background-color: #222;
+        }
+        canvas {
+            border: 2px solid #fff;
+        }
+        .game-over, .controls {
+            color: #fff;
+            font-size: 24px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            display: none;
+        }
+        .controls {
+            font-size: 20px;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="pongCanvas" width="800" height="400"></canvas>
+    <div class="controls" id="controls">
+        <p>Controls:</p>
+        <p>Left Paddle: W (up), S (down)</p>
+        <p>Right Paddle: Arrow Up (up), Arrow Down (down)</p>
+        <p>Press any key to start the game</p>
+    </div>
+    <div class="game-over" id="gameOver"></div>
+    <script>
+        const canvas = document.getElementById('pongCanvas');
+        const ctx = canvas.getContext('2d');
+        const controlsScreen = document.getElementById('controls');
+        const gameOverScreen = document.getElementById('gameOver');
+
+        let paddleWidth = 10, paddleHeight = 100, ballSize = 10;
+        let paddleLeftY = (canvas.height - paddleHeight) / 2;
+        let paddleRightY = (canvas.height - paddleHeight) / 2;
+        let ballX = canvas.width / 2, ballY = canvas.height / 2;
+        let ballSpeedX = 5, ballSpeedY = 2;
+        let leftPaddleSpeed = 0, rightPaddleSpeed = 0;
+        let leftScore = 0, rightScore = 0;
+        let gameOver = false;
+
+        controlsScreen.style.display = 'block';
+
+        function drawPaddles() {
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(0, paddleLeftY, paddleWidth, paddleHeight);
+            ctx.fillRect(canvas.width - paddleWidth, paddleRightY, paddleWidth, paddleHeight);
+        }
+
+        function drawBall() {
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(ballX, ballY, ballSize, ballSize);
+        }
+
+        function drawScores() {
+            ctx.fillStyle = '#fff';
+            ctx.font = '24px Arial';
+            ctx.fillText(`Left: ${leftScore}`, 50, 30);
+            ctx.fillText(`Right: ${rightScore}`, canvas.width - 100, 30);
+        }
+
+        function updatePaddles() {
+            paddleLeftY += leftPaddleSpeed;
+            paddleRightY += rightPaddleSpeed;
+
+            paddleLeftY = Math.max(0, Math.min(canvas.height - paddleHeight, paddleLeftY));
+            paddleRightY = Math.max(0, Math.min(canvas.height - paddleHeight, paddleRightY));
+        }
+
+        function updateBall() {
+            if (gameOver) return;
+
+            ballX += ballSpeedX;
+            ballY += ballSpeedY;
+
+            if (ballY <= 0 || ballY >= canvas.height - ballSize) {
+                ballSpeedY = -ballSpeedY;
+            }
+
+            if (ballX <= paddleWidth && ballY >= paddleLeftY && ballY <= paddleLeftY + paddleHeight) {
+                ballSpeedX = -ballSpeedX;
+            }
+            if (ballX >= canvas.width - paddleWidth - ballSize && ballY >= paddleRightY && ballY <= paddleRightY + paddleHeight) {
+                ballSpeedX = -ballSpeedX;
+            }
+
+            if (ballX <= 0) {
+                rightScore++;
+                resetBall();
+                if (rightScore >= 5) {
+                    gameOver = true;
+                    gameOverScreen.style.display = 'block';
+                    gameOverScreen.textContent = 'Right Player Wins! Press R to Restart';
+                }
+            }
+            if (ballX >= canvas.width - ballSize) {
+                leftScore++;
+                resetBall();
+                if (leftScore >= 5) {
+                    gameOver = true;
+                    gameOverScreen.style.display = 'block';
+                    gameOverScreen.textContent = 'Left Player Wins! Press R to Restart';
+                }
+            }
+        }
+
+        function resetBall() {
+            ballX = canvas.width / 2;
+            ballY = canvas.height / 2;
+            ballSpeedX = -ballSpeedX;
+        }
+
+        function gameLoop() {
+            if (!gameOver) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                drawPaddles();
+                drawBall();
+                drawScores();
+                updatePaddles();
+                updateBall();
+                requestAnimationFrame(gameLoop);
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (controlsScreen.style.display === 'block') {
+                controlsScreen.style.display = 'none';
+                gameLoop();
+            }
+
+            if (e.key === 'w') leftPaddleSpeed = -5;
+            if (e.key === 's') leftPaddleSpeed = 5;
+            if (e.key === 'ArrowUp') rightPaddleSpeed = -5;
+            if (e.key === 'ArrowDown') rightPaddleSpeed = 5;
+            if (e.key === 'r' && gameOver) {
+                gameOver = false;
+                leftScore = 0;
+                rightScore = 0;
+                gameOverScreen.style.display = 'none';
+                resetBall();
+                gameLoop();
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            if (e.key === 'w' || e.key === 's') leftPaddleSpeed = 0;
+            if (e.key === 'ArrowUp' || e.key === 'ArrowDown') rightPaddleSpeed = 0;
+        });
+
+        controlsScreen.style.display = 'block';
+    </script>
+</body>
+</html>
