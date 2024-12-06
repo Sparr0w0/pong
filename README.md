@@ -1,2 +1,2 @@
 # pong
-pong in html/js
+A simple pong game in html/js
